@@ -28,5 +28,7 @@ jobs:
       run: npm run start-fe &
     - name: Build back-end
       run: npm run server-be &
+    - name: Install browsers
+      run: npx playwright install
     - name: Run tests
       run: npm test
