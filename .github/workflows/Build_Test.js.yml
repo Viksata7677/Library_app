@@ -10,7 +10,7 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
+  build_test:
 
     runs-on: ubuntu-latest
     
@@ -24,6 +24,8 @@ jobs:
         cache: 'npm'
     - name: Install modules
       run: npm install
+    - name: Manually change the config file
+      run: echo 'export const settings = { host:"http://localhost:3030" };' > src/config.js
     - name: Build front-end
       run: npm run start-fe &
     - name: Build back-end
@@ -32,3 +34,27 @@ jobs:
       run: npx playwright install
     - name: Run tests
       run: npm test
+
+  deploy_be:
+    needs: build_test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to Render
+        uses: JorgeLNJunior/render-deploy@v1.5.0
+        with:
+          service_id: ${{ secrets.BE_SERVICE }}
+          api_key: ${{ secrets.MY_RENDER_API }}
+          wait_deploy: 
+      
+  deploy_fe:
+    needs: deploy_be
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to Render
+        uses: JorgeLNJunior/render-deploy@v1.5.0
+        with:
+          service_id: ${{ secrets.FE_SERVICE }}
+          api_key: ${{ secrets.MY_RENDER_API }}
+          wait_deploy: true
